@@ -1,0 +1,118 @@
+import { useContext, useState } from 'react';
+import AuthContext from '../context/AuthContext';
+import authService from '../services/authService';
+import { User, Mail, Shield, Save, Loader2 } from 'lucide-react';
+
+const Profile = () => {
+  const { user, updateUser } = useContext(AuthContext);
+  const [name, setName] = useState(user?.name || '');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  const handleUpdate = async () => {
+      setIsLoading(true);
+      setMessage(null);
+      try {
+          const updated = await authService.updateMe({ name });
+          updateUser(updated);
+          setMessage({ type: 'success', text: 'Profile updated successfully' });
+          setIsEditing(false);
+      } catch (error) {
+           setMessage({ type: 'error', text: 'Failed to update profile' });
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
+  return (
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">User Profile</h1>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-32"></div>
+          
+          <div className="px-8 pb-8">
+              <div className="relative flex justify-between items-end -mt-12 mb-6">
+                  <div className="bg-white p-2 rounded-full shadow-md">
+                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                          <User size={48} />
+                      </div>
+                  </div>
+                  
+                  {message && (
+                     <div className={`text-sm px-4 py-2 rounded-lg font-medium ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                         {message.text}
+                     </div>
+                  )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                      <label className="block text-sm font-semibold text-gray-500 uppercase tracking-wider">Full Name</label>
+                      <div className="flex items-center gap-3">
+                          <User className="text-gray-400" />
+                          {isEditing ? (
+                              <input 
+                                type="text" 
+                                value={name} 
+                                onChange={(e) => setName(e.target.value)}
+                                className="flex-1 border rounded px-3 py-1.5 focus:ring-2 focus:ring-green-500 outline-none"
+                              />
+                          ) : (
+                              <span className="text-lg font-medium text-gray-900">{user?.name}</span>
+                          )}
+                      </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                      <label className="block text-sm font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
+                      <div className="flex items-center gap-3">
+                          <Mail className="text-gray-400" />
+                          <span className="text-lg font-medium text-gray-900">{user?.email}</span>
+                      </div>
+                  </div>
+
+                   <div className="space-y-4">
+                      <label className="block text-sm font-semibold text-gray-500 uppercase tracking-wider">Role</label>
+                      <div className="flex items-center gap-3">
+                          <Shield className="text-gray-400" />
+                           <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-bold uppercase">{user?.role}</span>
+                      </div>
+                  </div>
+              </div>
+              
+              <div className="mt-8 border-t pt-6 flex justify-end">
+                  {isEditing ? (
+                      <div className="flex gap-3">
+                          <button 
+                            onClick={() => setIsEditing(false)}
+                            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                          >
+                            Cancel
+                          </button>
+                          <button 
+                            onClick={handleUpdate}
+                            disabled={isLoading}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2 transition"
+                          >
+                             {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                             Save Changes
+                          </button>
+                      </div>
+                  ) : (
+                      <button 
+                         onClick={() => setIsEditing(true)}
+                         className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-medium transition"
+                      >
+                          Edit Profile
+                      </button>
+                  )}
+              </div>
+          </div>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;
