@@ -1,38 +1,54 @@
 import React, { useState, useEffect, useRef } from 'react';
-import CameraFeed from '../components/CameraFeed';
-import { ShieldCheck, Power, Activity, Upload, Play, MoreVertical, Trash2, Video as VideoIcon, Plus } from 'lucide-react';
+import { ShieldCheck, Power, Activity, Upload, Play, MoreVertical, Trash2, Video as VideoIcon, Plus, MonitorPlay } from 'lucide-react';
 import axios from 'axios';
+import { useDetection } from '../context/DetectionContext';
 
 const AnimalDetection = () => {
-  const [globalSystemActive, setGlobalSystemActive] = useState(false);
+  const { isActive, startAnalysis, stopAnalysis, activeVideo: contextActiveVideo, toggleAnalysis, setPortalNode } = useDetection();
+  
   const [videos, setVideos] = useState([]);
-  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [zones, setZones] = useState([]);
+  const [selectedVideo, setSelectedVideo] = useState(null); // Local selection for viewing details/prep
+  const [selectedZoneId, setSelectedZoneId] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   
   // For uploading
   const fileInputRef = useRef(null);
 
+  // Sync context active video with local selection if needed? 
+  // No, user clicks a video -> sets selectedVideo (local).
+  // If they click Run Analysis -> context.startAnalysis(selectedVideo).
+  
+  // Also, if context is active, we should probably show THAT video as selected? 
   useEffect(() => {
-    fetchVideos();
+      if(isActive && contextActiveVideo) {
+          setSelectedVideo(contextActiveVideo);
+      }
+  }, [isActive, contextActiveVideo]);
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
-  const fetchVideos = async () => {
+  const fetchData = async () => {
     try {
       const token = JSON.parse(localStorage.getItem('user'))?.token;
       if (!token) return;
 
-      const { data } = await axios.get('http://localhost:5000/api/videos', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setVideos(data);
+      const [videosRes, zonesRes] = await Promise.all([
+          axios.get('http://localhost:5000/api/videos', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('http://localhost:5000/api/farmer/zones', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      setVideos(videosRes.data);
+      setZones(zonesRes.data);
       
-      // Select the first video by default if available and none selected
-      if (data.length > 0 && !selectedVideo) {
-         setSelectedVideo(data[0]);
+      if (videosRes.data.length > 0 && !selectedVideo && !isActive) {
+         setSelectedVideo(videosRes.data[0]);
       }
     } catch (error) {
-      console.error("Error fetching videos:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -42,10 +58,20 @@ const AnimalDetection = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (!selectedZoneId) {
+        alert("Please select a zone before uploading.");
+        return;
+    }
+
     setUploading(true);
     const formData = new FormData();
     formData.append('video', file);
-    formData.append('title', file.name.split('.')[0]); // Default title
+    formData.append('title', file.name.split('.')[0]); 
+    formData.append('zoneId', selectedZoneId);
+    
+    // Find zone name
+    const zoneObj = zones.find(z => z._id === selectedZoneId);
+    if(zoneObj) formData.append('zoneName', zoneObj.zoneName);
 
     try {
       const token = JSON.parse(localStorage.getItem('user'))?.token;
@@ -55,7 +81,7 @@ const AnimalDetection = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      await fetchVideos(); // Refresh list
+      await fetchData(); // Refresh list
     } catch (error) {
       console.error("Upload Error Details:", error);
       alert('Upload failed: ' + (error.response?.data?.message || error.message));
@@ -63,6 +89,7 @@ const AnimalDetection = () => {
       setUploading(false);
       // Reset input
       if(fileInputRef.current) fileInputRef.current.value = '';
+      setSelectedZoneId(""); 
     }
   };
 
@@ -82,17 +109,25 @@ const AnimalDetection = () => {
       if (selectedVideo?._id === id) {
         setSelectedVideo(newVideos.length > 0 ? newVideos[0] : null);
       }
+      
+      // Stop analysis if we process the deleted video
+      if (contextActiveVideo?._id === id && isActive) {
+          stopAnalysis();
+      }
+
     } catch (error) {
       alert('Delete failed');
     }
   };
 
   const handleSystemToggle = () => {
-    setGlobalSystemActive(prev => !prev);
+      if(isActive) {
+          stopAnalysis();
+      } else {
+          if(!selectedVideo) return alert("Select a video first");
+          startAnalysis(selectedVideo);
+      }
   };
-
-  // Construct full URL
-  const getFullUrl = (url) => url?.startsWith('/uploads') ? `http://localhost:5000${url}` : url;
 
   return (
     <div className="flex flex-col h-[calc(100vh-theme(spacing.16))] bg-gray-950 text-gray-200 overflow-hidden">
@@ -109,10 +144,10 @@ const AnimalDetection = () => {
 
         <div className="flex items-center gap-6">
             <div className="flex items-center gap-2 px-4 py-2 bg-black/40 rounded border border-gray-800">
-                <Activity className={`w-4 h-4 ${globalSystemActive ? 'text-green-500 animate-pulse' : 'text-gray-600'}`} />
+                <Activity className={`w-4 h-4 ${isActive ? 'text-green-500 animate-pulse' : 'text-gray-600'}`} />
                 <span className="font-mono text-sm tracking-wider">
-                    ANALYSIS: <span className={globalSystemActive ? "text-green-500" : "text-gray-500"}>
-                        {globalSystemActive ? "ACTIVE" : "IDLE"}
+                    ANALYSIS: <span className={isActive ? "text-green-500" : "text-gray-500"}>
+                        {isActive ? "ACTIVE" : "IDLE"}
                     </span>
                 </span>
             </div>
@@ -120,38 +155,82 @@ const AnimalDetection = () => {
             <button
                 onClick={handleSystemToggle}
                 className={`flex items-center gap-2 px-6 py-2 rounded-full font-bold tracking-wide transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] ${
-                    globalSystemActive 
+                    isActive 
                     ? "bg-red-600 hover:bg-red-700 text-white shadow-red-900/20" 
                     : "bg-green-600 hover:bg-green-700 text-white shadow-green-900/20"
                 }`}
             >
                 <Power size={18} />
-                {globalSystemActive ? "STOP ANALYSIS" : "RUN ANALYSIS"}
+                {isActive ? "STOP ANALYSIS" : "RUN ANALYSIS"}
             </button>
         </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-         {/* Main View - Active Video */}
+         {/* Main View - Active Video Placeholder or Global Overlay Area */}
          <div className="flex-1 p-6 flex flex-col items-center justify-center bg-black/50 relative">
-             {selectedVideo ? (
-                 <div className="w-full max-w-5xl aspect-video bg-black rounded-lg border border-gray-800 shadow-2xl relative overflow-hidden">
-                      {/* Pass the fully constructed URL to CameraFeed. 
-                          CameraFeed will handle the detection logic using this URL as src.
-                      */}
-                      <CameraFeed 
-                          id={selectedVideo._id} 
-                          videoUrl={getFullUrl(selectedVideo.fileUrl)}
-                          globalDetecting={globalSystemActive} 
-                      />
-                 </div>
-             ) : (
-                 <div className="text-center text-gray-500">
-                     <VideoIcon size={64} className="mx-auto mb-4 opacity-20" />
-                     <h3 className="text-xl font-mono">NO VIDEO SELECTED</h3>
-                     <p>Select a video from the library to begin analysis</p>
-                 </div>
-             )}
+             {/* 
+                Explanation: GlobalSurveillance component in App.jsx renders the actual video.
+                If we are On this page, GlobalSurveillance will "appear" to be here because we styled it position:relative (via App logic or Portal).
+                Wait, my GlobalSurveillance logic was: if /farmer/detection, show relative. 
+                But where is it in the DOM? It is in App.jsx, ABOVE Sidebar/Main content structure?
+                No, looking at App.jsx, it's just inside the main div wrapper, ABOVE Sidebar and Main content.
+                So it will push Sidebar/Content down if relative?
+                Ah, I set it to `position: shouldShow ? 'relative' : 'fixed'`.
+                If relative in App.jsx, it pushes everything down. That's bad layout.
+                
+                Correction: GlobalSurveillance should ideally be INSIDE this component to fit nicely, OR we use a Portal.
+                Since I didn't set up a Portal, and "display:none" allows keeping state,
+                GlobalSurveillance acts as the "Engine".
+                
+                For VISUAL FEEDBACK on this page:
+                We want to see the video right here in this specific div.
+                If GlobalSurveillance is outside, we can't easily see it here without absolute positioning hacks or Portals.
+                
+                Alternative:
+                GlobalSurveillance handles logic but renders DIFFERENTLY.
+                Or, cleaner:
+                We keep GlobalSurveillance for 'Background mode' (hidden video element).
+                When on THIS page, we perform a "Handoff"? No, that resets state.
+                
+                Let's use a React Portal to mount the video from GlobalSurveillance INTO a DOM node here.
+                I will add an ID 'detection-view-container' here.
+                GlobalSurveillance will verify if that ID exists (via ref or getElementById) and createPortal into it.
+             */}
+             <div 
+                id="detection-video-portal" 
+                ref={(node) => {
+                    if (node) setPortalNode(node);
+                    // We don't necessarily need to unset it on unmount if we just overwrite it, 
+                    // but cleaner might be to clean up in useEffect. 
+                    // However, ref callback runs with null on unmount.
+                    else setPortalNode(null); 
+                }}
+                className="w-full max-w-5xl aspect-video bg-black rounded-lg border border-gray-800 shadow-2xl relative overflow-hidden flex items-center justify-center">
+                 {!isActive && !selectedVideo && (
+                     <div className="text-center text-gray-500">
+                         <VideoIcon size={64} className="mx-auto mb-4 opacity-20" />
+                         <h3 className="text-xl font-mono">NO VIDEO SELECTED</h3>
+                         <p>Select a video from the library to begin analysis</p>
+                     </div>
+                 )}
+                 {!isActive && selectedVideo && (
+                     <div className="relative w-full h-full group">
+                         {/* Preview Static or just placeholder? 
+                             If not active, we can show a thumbnail or just "Ready to Run".
+                             For now, let's just show a play placeholder.
+                         */}
+                         <div className="absolute inset-0 flex items-center justify-center">
+                             <MonitorPlay size={64} className="text-green-600 opacity-50" />
+                         </div>
+                         <div className="absolute bottom-4 left-4">
+                             <h3 className="text-lg font-bold text-white shadow-black drop-shadow-md">{selectedVideo.title}</h3>
+                             <p className="text-green-400 text-sm shadow-black drop-shadow-md">{selectedVideo.zoneName || 'Unknown Zone'}</p>
+                         </div>
+                     </div>
+                 )}
+                 {/* The Portal will fill this when active and on this route */}
+             </div>
          </div>
 
          {/* Sidebar - Video Library */}
@@ -160,13 +239,31 @@ const AnimalDetection = () => {
                  <h3 className="font-bold text-gray-300 flex items-center gap-2">
                      <VideoIcon size={18} /> LIBRARY
                  </h3>
-                 <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition disabled:opacity-50"
-                 >
-                     {uploading ? <Activity className="animate-spin" size={18} /> : <Plus size={18} />}
-                 </button>
+                 <div className="flex items-center gap-2">
+                     <select 
+                        value={selectedZoneId}
+                        onChange={(e) => setSelectedZoneId(e.target.value)}
+                        className="bg-gray-800 text-white text-xs p-2 rounded border border-gray-700 outline-none focus:border-green-500 w-32"
+                     >
+                        <option value="">Select Zone</option>
+                        {zones.map(z => (
+                            <option key={z._id} value={z._id}>{z.zoneName}</option>
+                        ))}
+                     </select>
+                     <button 
+                        onClick={() => {
+                             if(!selectedZoneId) {
+                                 alert("Please select a zone first");
+                                 return;
+                             }
+                             fileInputRef.current?.click();
+                        }}
+                        disabled={uploading}
+                        className={`p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition ${uploading || !selectedZoneId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                     >
+                         {uploading ? <Activity className="animate-spin" size={18} /> : <Plus size={18} />}
+                     </button>
+                 </div>
                  <input 
                     type="file" 
                     ref={fileInputRef} 

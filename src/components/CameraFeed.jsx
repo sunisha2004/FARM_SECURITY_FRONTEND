@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import VideoUploader from './VideoUploader';
 import { detectAnimals, loadModel } from '../utils/animalDetector';
 import { Trash2, Loader2, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 
-const CameraFeed = ({ id, videoUrl, globalDetecting }) => {
+const CameraFeed = ({ id, videoUrl, globalDetecting, zoneName }) => {
   const [detections, setDetections] = useState([]);
   const [error, setError] = useState(null);
 
@@ -11,6 +12,7 @@ const CameraFeed = ({ id, videoUrl, globalDetecting }) => {
   const canvasRef = useRef(null);
   const requestRef = useRef(null);
   const isDetectingRef = useRef(false);
+  const lastAlertTimeRef = useRef({}); // Track last alert time per animal type
 
   // Sync internal detection state with global control and video presence
   useEffect(() => {
@@ -27,6 +29,7 @@ const CameraFeed = ({ id, videoUrl, globalDetecting }) => {
   useEffect(() => {
      setDetections([]);
      setError(null);
+     lastAlertTimeRef.current = {}; // Reset alert throttles
   }, [videoUrl]);
   
   // Removed handleVideoUpload and handleClear as they are controlled by parent now
@@ -66,6 +69,32 @@ const CameraFeed = ({ id, videoUrl, globalDetecting }) => {
     }
   };
 
+  const sendAlert = async (animalClass) => {
+      const now = Date.now();
+      const lastSent = lastAlertTimeRef.current[animalClass] || 0;
+      
+      // Throttle: Only send alert for same animal every 5 seconds
+      if (now - lastSent > 5000) {
+          lastAlertTimeRef.current[animalClass] = now;
+          
+          try {
+              const token = JSON.parse(localStorage.getItem('user'))?.token;
+              if(!token) return;
+
+              await axios.post('http://localhost:5000/api/alerts/detect', {
+                  animalType: animalClass,
+                  videoId: id,
+                  zoneName: zoneName || 'Unknown Zone'
+              }, {
+                  headers: { Authorization: `Bearer ${token}` }
+              });
+              console.log(`Alert sent for ${animalClass}`);
+          } catch (err) {
+              console.error("Failed to send alert:", err);
+          }
+      }
+  };
+
   const detectLoop = async () => {
     if (!videoRef.current || !canvasRef.current || !isDetectingRef.current) return;
 
@@ -82,6 +111,13 @@ const CameraFeed = ({ id, videoUrl, globalDetecting }) => {
       const results = await detectAnimals(video);
       setDetections(results);
       drawDetections(results);
+
+      // Process Alerts
+      results.forEach(d => {
+          if (d.score > 0.6) { // Confidence threshold
+              sendAlert(d.class);
+          }
+      });
     }
 
     if (isDetectingRef.current) {
