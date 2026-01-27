@@ -4,7 +4,12 @@ const API_URL = 'http://localhost:5000/api/auth/';
 const USER_URL = 'http://localhost:5000/api/users/';
 
 const register = async (userData) => {
-  const response = await axios.post(API_URL + 'register', userData);
+  // If userData is FormData, send it directly; otherwise wrap in JSON
+  const config = userData instanceof FormData ? {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  } : {};
+  
+  const response = await axios.post(API_URL + 'register', userData, config);
   return response.data;
 };
 
@@ -35,13 +40,20 @@ const getMe = async () => {
 
 const updateMe = async (data) => {
     const user = JSON.parse(localStorage.getItem('user'));
+    
     const config = {
         headers: {
             Authorization: `Bearer ${user.token}`,
         },
     };
+    
+    // If data is FormData, set appropriate header
+    if (data instanceof FormData) {
+        config.headers['Content-Type'] = 'multipart/form-data';
+    }
+    
     const response = await axios.put(USER_URL + 'me', data, config);
-    // Update local storage with new name but keep token
+    // Update local storage with new data but keep token
     if (response.data) {
         const updatedUser = { ...user, ...response.data, token: user.token };
         localStorage.setItem('user', JSON.stringify(updatedUser));

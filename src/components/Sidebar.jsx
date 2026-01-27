@@ -2,6 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 import { useAlerts } from '../context/AlertContext';
+import { useState } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -11,10 +12,12 @@ import {
   Video, 
   Tractor,
   ScanEye,
-  Bell
+  Bell,
+  AlertTriangle
 } from 'lucide-react';
 
 const Sidebar = () => {
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,6 +25,7 @@ const Sidebar = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+    setShowLogoutModal(false);
   };
 
   const isActive = (path) => location.pathname === path;
@@ -108,13 +112,49 @@ const Sidebar = () => {
 
       <div className="mt-auto p-6 border-t border-gray-100">
         <button 
-          onClick={handleLogout}
+          onClick={() => setShowLogoutModal(true)}
           className="flex items-center gap-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"
         >
           <LogOut size={20} />
           Logout
         </button>
       </div>
+
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all animate-scale-in">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="text-red-600" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800">Confirm Logout</h3>
+                <p className="text-gray-500 text-sm">Are you sure you want to logout?</p>
+              </div>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              You will need to login again to access your dashboard and farm data.
+            </p>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-6 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-6 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition shadow-lg shadow-red-600/20 flex items-center gap-2"
+              >
+                <LogOut size={18} />
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
