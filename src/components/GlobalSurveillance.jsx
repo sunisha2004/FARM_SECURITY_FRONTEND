@@ -18,6 +18,7 @@ const GlobalSurveillance = () => {
 
     const renderContent = () => (
          <CameraFeed 
+            key={activeVideo._id}
             id={activeVideo._id}
             videoUrl={getFullUrl(activeVideo.fileUrl)}
             globalDetecting={isActive}

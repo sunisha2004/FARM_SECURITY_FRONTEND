@@ -216,16 +216,21 @@ const AnimalDetection = () => {
                  )}
                  {!isActive && selectedVideo && (
                      <div className="relative w-full h-full group">
-                         {/* Preview Static or just placeholder? 
-                             If not active, we can show a thumbnail or just "Ready to Run".
-                             For now, let's just show a play placeholder.
-                         */}
-                         <div className="absolute inset-0 flex items-center justify-center">
-                             <MonitorPlay size={64} className="text-green-600 opacity-50" />
+                         {/* Preview Video Player */}
+                         <video
+                             key={selectedVideo._id}
+                             src={selectedVideo.fileUrl?.startsWith('/uploads') ? `http://localhost:5000${selectedVideo.fileUrl}` : selectedVideo.fileUrl}
+                             className="w-full h-full object-contain"
+                             controls
+                             playsInline
+                             crossOrigin="anonymous"
+                         />
+                         <div className="absolute top-4 left-4 bg-black/60 px-3 py-1 rounded backdrop-blur-sm">
+                             <span className="text-green-500 font-mono text-sm font-bold">PREVIEW MODE</span>
                          </div>
-                         <div className="absolute bottom-4 left-4">
-                             <h3 className="text-lg font-bold text-white shadow-black drop-shadow-md">{selectedVideo.title}</h3>
-                             <p className="text-green-400 text-sm shadow-black drop-shadow-md">{selectedVideo.zoneName || 'Unknown Zone'}</p>
+                         <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-2 rounded backdrop-blur-sm">
+                             <h3 className="text-lg font-bold text-white">{selectedVideo.title}</h3>
+                             <p className="text-green-400 text-sm">{selectedVideo.zoneName || 'Unknown Zone'}</p>
                          </div>
                      </div>
                  )}
@@ -284,7 +289,13 @@ const AnimalDetection = () => {
                      videos.map(video => (
                          <div 
                             key={video._id} 
-                            onClick={() => setSelectedVideo(video)}
+                            onClick={() => {
+                                setSelectedVideo(video);
+                                // If currently analyzing, switch the active video too
+                                if (isActive) {
+                                    startAnalysis(video);
+                                }
+                            }}
                             className={`group last:border-b-0 p-3 rounded-lg cursor-pointer transition-all border border-transparent ${
                                 selectedVideo?._id === video._id 
                                 ? 'bg-green-900/20 border-green-800' 

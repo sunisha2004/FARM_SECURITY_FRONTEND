@@ -189,6 +189,7 @@ const CameraFeed = ({ id, videoUrl, globalDetecting, zoneName }) => {
         {videoUrl ? (
             <>
                 <video
+                    key={videoUrl}
                     ref={videoRef}
                     src={videoUrl}
                     className="w-full h-full object-contain"
