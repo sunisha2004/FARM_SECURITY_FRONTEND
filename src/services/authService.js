@@ -47,17 +47,11 @@ const updateMe = async (data) => {
         },
     };
     
-    // If data is FormData, set appropriate header
     if (data instanceof FormData) {
         config.headers['Content-Type'] = 'multipart/form-data';
     }
     
     const response = await axios.put(USER_URL + 'me', data, config);
-    // Update local storage with new data but keep token
-    if (response.data) {
-        const updatedUser = { ...user, ...response.data, token: user.token };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
     return response.data;
 }
 

@@ -9,11 +9,13 @@ import AnimalDetection from './pages/AnimalDetection';
 import { useLocation } from 'react-router-dom';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageFarmers from './pages/admin/ManageFarmers';
+import FarmerDetails from './pages/admin/FarmerDetails';
 import FarmerDashboard from './pages/farmer/FarmerDashboard';
 import MyFarm from './pages/farmer/MyFarm';
 import MyZones from './pages/farmer/MyZones';
 import AlertList from './pages/farmer/AlertList';
 import AlertDetails from './pages/farmer/AlertDetails';
+import FarmGallery from './pages/farmer/FarmGallery';
 import { AlertProvider } from './context/AlertContext';
 
 
@@ -44,6 +46,7 @@ function App() {
                  <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                     <Route path="/admin/dashboard" element={<AdminDashboard />} />
                     <Route path="/admin/farmers" element={<ManageFarmers />} />
+                    <Route path="/admin/farmers/:id" element={<FarmerDetails />} />
                     <Route path="/admin/farms" element={<div className="p-10">Farms Overview (Coming Soon)</div>} />
                  </Route>
 
@@ -55,6 +58,7 @@ function App() {
                     <Route path="/farmer/detection" element={<AnimalDetection />} />
                     <Route path="/farmer/alerts" element={<AlertList />} />
                     <Route path="/farmer/alerts/:id" element={<AlertDetails />} />
+                    <Route path="/farmer/gallery" element={<FarmGallery />} />
                  </Route>
 
                  {/* Shared/Common (Profile) - Accessible by both if needed, or restrict */}
@@ -73,3 +77,13 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
+
+
+
+
+

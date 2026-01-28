@@ -1,13 +1,15 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { Mail, Lock, User, Loader2, Shield, Camera, X } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Shield, Camera, X, Phone } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
       name: '',
       email: '',
-      password: ''
+      phoneNumber: '',
+      password: '',
+      confirmPassword: ''
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -42,6 +44,21 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    
+    // Frontend Validation
+    if (formData.password !== formData.confirmPassword) {
+        return setError("Passwords do not match");
+    }
+
+    if (!/^\d{10}$/.test(formData.phoneNumber)) {
+        return setError("Please enter a valid 10-digit phone number");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+        return setError("Please enter a valid email address");
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -49,6 +66,7 @@ const Register = () => {
       const data = new FormData();
       data.append('name', formData.name);
       data.append('email', formData.email);
+      data.append('phoneNumber', formData.phoneNumber);
       data.append('password', formData.password);
       
       if (imageFile) {
@@ -146,6 +164,22 @@ const Register = () => {
                 </div>
 
                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                   <div className="relative">
+                       <Phone className="absolute left-3 top-3 text-gray-400" size={18} />
+                       <input 
+                         type="text" 
+                         name="phoneNumber"
+                         className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+                         placeholder="1234567890"
+                         value={formData.phoneNumber}
+                         onChange={handleChange}
+                         required
+                       />
+                   </div>
+                </div>
+
+                <div>
                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                    <div className="relative">
                        <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
@@ -155,6 +189,22 @@ const Register = () => {
                          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
                          placeholder="••••••••"
                          value={formData.password}
+                         onChange={handleChange}
+                         required
+                       />
+                   </div>
+                </div>
+
+                <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                   <div className="relative">
+                       <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+                       <input 
+                         type="password"
+                         name="confirmPassword"
+                         className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+                         placeholder="••••••••"
+                         value={formData.confirmPassword}
                          onChange={handleChange}
                          required
                        />

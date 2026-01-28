@@ -1,11 +1,12 @@
 import { useContext, useState } from 'react';
 import AuthContext from '../context/AuthContext';
 import authService from '../services/authService';
-import { User, Mail, Shield, Save, Loader2, Camera, X } from 'lucide-react';
+import { User, Mail, Shield, Save, Loader2, Camera, X, Phone } from 'lucide-react';
 
 const Profile = () => {
   const { user, updateUser } = useContext(AuthContext);
   const [name, setName] = useState(user?.name || '');
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -35,6 +36,7 @@ const Profile = () => {
       try {
           const formData = new FormData();
           formData.append('name', name);
+          formData.append('phoneNumber', phoneNumber);
           
           if (imageFile) {
               formData.append('image', imageFile);
@@ -144,13 +146,30 @@ const Profile = () => {
                       </div>
                   </div>
                   
-                  <div className="space-y-4">
-                      <label className="block text-sm font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
-                      <div className="flex items-center gap-3">
-                          <Mail className="text-gray-400" />
-                          <span className="text-lg font-medium text-gray-900">{user?.email}</span>
-                      </div>
-                  </div>
+                   <div className="space-y-4">
+                       <label className="block text-sm font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
+                       <div className="flex items-center gap-3">
+                           <Mail className="text-gray-400" />
+                           <span className="text-lg font-medium text-gray-900">{user?.email}</span>
+                       </div>
+                   </div>
+
+                   <div className="space-y-4">
+                       <label className="block text-sm font-semibold text-gray-500 uppercase tracking-wider">Phone Number</label>
+                       <div className="flex items-center gap-3">
+                           <Phone className="text-gray-400" />
+                           {isEditing ? (
+                               <input 
+                                 type="text" 
+                                 value={phoneNumber} 
+                                 onChange={(e) => setPhoneNumber(e.target.value)}
+                                 className="flex-1 border rounded px-3 py-1.5 focus:ring-2 focus:ring-green-500 outline-none"
+                               />
+                           ) : (
+                               <span className="text-lg font-medium text-gray-900">{user?.phoneNumber}</span>
+                           )}
+                       </div>
+                   </div>
 
                    <div className="space-y-4">
                       <label className="block text-sm font-semibold text-gray-500 uppercase tracking-wider">Role</label>
@@ -170,6 +189,7 @@ const Profile = () => {
                                 setImageFile(null);
                                 setImagePreview(null);
                                 setName(user?.name || '');
+                                setPhoneNumber(user?.phoneNumber || '');
                             }}
                             className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
                           >

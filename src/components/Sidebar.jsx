@@ -13,7 +13,8 @@ import {
   Tractor,
   ScanEye,
   Bell,
-  AlertTriangle
+  AlertTriangle,
+  Images
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -101,6 +102,13 @@ const Sidebar = () => {
               >
                 <ScanEye size={20} />
                 Animal Detection
+              </Link>
+              <Link 
+                to="/farmer/gallery" 
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive('/farmer/gallery') ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                <Images size={20} />
+                Farm Gallery
               </Link>
               
                <AlertsLink isActive={isActive} />
