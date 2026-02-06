@@ -33,7 +33,7 @@ const LocationMarker = ({ points, setPoints, isEditing, mode }) => {
     return null;
 };
 
-const MapController = ({ points, searchResult }) => {
+const MapController = ({ points, searchResult, center }) => {
     const map = useMap();
     
     useEffect(() => {
@@ -41,6 +41,13 @@ const MapController = ({ points, searchResult }) => {
             map.flyTo([searchResult.lat, searchResult.lon], 16, { animate: true, duration: 1.5 });
         }
     }, [searchResult, map]);
+
+    // Handle external center updates (e.g. from Farm Location)
+    useEffect(() => {
+        if (center && center.lat && center.lng && !searchResult) {
+             map.flyTo([center.lat, center.lng], 16, { animate: true, duration: 1.5 });
+        }
+    }, [center, map, searchResult]);
 
     useEffect(() => {
         if (points.length > 0 && !searchResult) {
@@ -58,7 +65,8 @@ const ZoneMap = ({
     isEditing = false, 
     existingZones = [], 
     height = "400px",
-    mode = "polygon" // 'polygon' or 'point'
+    mode = "polygon", // 'polygon' or 'point'
+    center = null 
 }) => {
     const defaultCenter = [13.0827, 80.2707]; // Chennai
     const [searchQuery, setSearchQuery] = useState('');
@@ -202,7 +210,7 @@ const ZoneMap = ({
                     )}
 
                     <LocationMarker points={points} setPoints={setPoints} isEditing={isEditing} mode={mode} />
-                    <MapController points={points} searchResult={searchResult} />
+                    <MapController points={points} searchResult={searchResult} center={center} />
                 </MapContainer>
                 
                 {isEditing && (
