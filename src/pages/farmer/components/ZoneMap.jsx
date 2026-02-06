@@ -16,11 +16,16 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow,
 });
 
-const LocationMarker = ({ points, setPoints, isEditing }) => {
+
+const LocationMarker = ({ points, setPoints, isEditing, mode }) => {
     useMapEvents({
         click(e) {
             if (isEditing) {
-                setPoints([...points, e.latlng]);
+                if (mode === 'point') {
+                    setPoints([e.latlng]);
+                } else {
+                    setPoints([...points, e.latlng]);
+                }
             }
         },
     });
@@ -52,7 +57,8 @@ const ZoneMap = ({
     setPoints, 
     isEditing = false, 
     existingZones = [], 
-    height = "400px" 
+    height = "400px",
+    mode = "polygon" // 'polygon' or 'point'
 }) => {
     const defaultCenter = [13.0827, 80.2707]; // Chennai
     const [searchQuery, setSearchQuery] = useState('');
@@ -172,13 +178,17 @@ const ZoneMap = ({
                         />
                     ))}
 
-                    {/* Current Zone Being Edited */}
+                    {/* Current Selection */}
                     {points.length > 0 && (
                         <>
-                            <Polygon 
-                                positions={points} 
-                                pathOptions={{ color: '#2563eb', dashArray: '5, 10' }} 
-                            />
+                            {mode === 'polygon' && (
+                                <Polygon 
+                                    positions={points} 
+                                    pathOptions={{ color: '#2563eb', dashArray: '5, 10' }} 
+                                />
+                            )}
+                            
+                            {/* Render markers for polygon vertices OR the single point */}
                             {points.map((point, index) => (
                                 <Marker 
                                     key={index} 
@@ -191,7 +201,7 @@ const ZoneMap = ({
                         </>
                     )}
 
-                    <LocationMarker points={points} setPoints={setPoints} isEditing={isEditing} />
+                    <LocationMarker points={points} setPoints={setPoints} isEditing={isEditing} mode={mode} />
                     <MapController points={points} searchResult={searchResult} />
                 </MapContainer>
                 
@@ -199,7 +209,11 @@ const ZoneMap = ({
                     <div className="bg-gray-50 p-2 text-[10px] text-gray-500 flex justify-between items-center border-t border-gray-200">
                         <div className="flex items-center gap-2">
                              <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
-                             <span>{points.length} points selected. Minimum 3 required. Click marker to remove.</span>
+                             <span>
+                                {mode === 'point' 
+                                    ? 'Click map to set location.' 
+                                    : `${points.length} points selected. Minimum 3 required.`}
+                             </span>
                         </div>
                         <button 
                             type="button"

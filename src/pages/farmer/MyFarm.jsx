@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, MapPin, Tractor, Loader2, Camera, ShieldCheck, Edit2, X, CheckCircle } from 'lucide-react';
+import { Save, MapPin, Tractor, Loader2, Camera, ShieldCheck, Edit2, X, CheckCircle, Info } from 'lucide-react';
+import ZoneMap from './components/ZoneMap';
 // import { useDetection } from '../../context/DetectionContext'; // Optional connection if needed later
 
 const MyFarm = () => {
-    const [farm, setFarm] = useState({ farmName: '', location: '' });
+    const [farm, setFarm] = useState({ farmName: '', location: '', coordinates: null }); // Added coordinates
+    const [points, setPoints] = useState([]); // For map points
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [exists, setExists] = useState(false);
@@ -46,6 +48,9 @@ const MyFarm = () => {
             const { data } = await axios.get('http://localhost:5000/api/farmer/farm', config);
             if(data) {
                 setFarm(data);
+                if(data.coordinates) {
+                   setPoints([data.coordinates]);
+                }
                 setExists(true);
             } else {
                 // If simplified backend returns null instead of 404
@@ -167,11 +172,47 @@ const MyFarm = () => {
                                                         : 'bg-red-50 text-red-500 border-red-200 cursor-not-allowed'
                                                 }`}
                                             />
-                                            {!hasZone && (
-                                                <p className="text-xs text-red-500 mt-1">
-                                                    You must define a farm zone in "Zone Management" to set location.
-                                                </p>
-                                            )}
+                                        </div>
+
+                                        {/* Map Selection */}
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Pin Location on Map</label>
+                                            <div className="rounded-xl overflow-hidden border border-gray-200">
+                                                <ZoneMap 
+                                                    points={points} 
+                                                    setPoints={async (pts) => {
+                                                        setPoints(pts);
+                                                        // Auto-reverse geocode if a point is set
+                                                        if (pts.length > 0) {
+                                                            try {
+                                                                const { lat, lng } = pts[0];
+                                                                const geoRes = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                                                                const address = geoRes.data.address;
+                                                                const locationName = [
+                                                                    address.village || address.town || address.city || address.suburb,
+                                                                    address.state_district,
+                                                                    address.state
+                                                                ].filter(Boolean).join(', ');
+                                                                
+                                                                // Update both location text and coordinates in farm state
+                                                                setFarm(prev => ({ 
+                                                                    ...prev, 
+                                                                    location: locationName,
+                                                                    coordinates: { lat, lng }
+                                                                }));
+                                                            } catch (err) {
+                                                                console.error("Geocoding error", err);
+                                                            }
+                                                        }
+                                                    }}
+                                                    isEditing={true}
+                                                    mode="point"
+                                                    height="300px"
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                                <Info size={12} /> Click on the map to pin your farm's exact location.
+                                            </p>
                                         </div>
                                         <div className="pt-2 flex justify-end gap-3">
                                             <button 

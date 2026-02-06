@@ -28,9 +28,26 @@ const MyZones = () => {
     });
     const [editingId, setEditingId] = useState(null);
 
+    const [farmCoordinates, setFarmCoordinates] = useState(null);
+
     useEffect(() => {
         fetchZones();
+        fetchFarmCoordinates();
     }, []);
+
+    const fetchFarmCoordinates = async () => {
+        try {
+            const token = JSON.parse(localStorage.getItem('user'))?.token;
+            if(!token) return;
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const { data } = await axios.get('http://localhost:5000/api/farmer/farm', config);
+            if (data && data.coordinates) {
+                setFarmCoordinates(data.coordinates);
+            }
+        } catch (error) {
+            console.error("Error fetching farm coordinates", error);
+        }
+    };
 
     const fetchZones = async () => {
         try {
@@ -285,6 +302,7 @@ const MyZones = () => {
                                             setPoints={(pts) => setFormData({...formData, coordinates: pts})}
                                             isEditing={true}
                                             existingZones={zones.filter(z => z._id !== editingId)}
+                                            center={farmCoordinates} 
                                         />
                                     </div>
                                 )}
