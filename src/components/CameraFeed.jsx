@@ -197,6 +197,12 @@ const CameraFeed = ({ id, videoUrl, globalDetecting, zoneName }) => {
                     playsInline
                     muted
                     crossOrigin="anonymous" 
+                    onEnded={() => {
+                        if (videoRef.current) {
+                            videoRef.current.currentTime = 0;
+                            videoRef.current.play().catch(e => console.error("Replay error", e));
+                        }
+                    }}
                 />
                 <canvas
                     ref={canvasRef}

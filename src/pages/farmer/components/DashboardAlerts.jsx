@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, ShieldCheck, Skull } from 'lucide-react';
 
-const DashboardAlerts = ({ alerts, loading, onClear }) => {
+const DashboardAlerts = ({ alerts, loading, onClear, onClearAll }) => {
   const getSeverityConfig = (severity) => {
     switch (severity) {
       case 'DANGEROUS': return { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100', icon: Skull };
@@ -17,7 +17,15 @@ const DashboardAlerts = ({ alerts, loading, onClear }) => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-full flex flex-col">
       <div className="p-5 border-b border-gray-100 flex justify-between items-center">
         <h2 className="font-bold text-gray-800 text-lg">Live Alerts</h2>
-        <button className="text-sm text-green-600 hover:text-green-700 font-medium">View All</button>
+        <div className="flex gap-2">
+             <button 
+                onClick={onClearAll}
+                className="text-xs bg-red-50 text-red-600 px-3 py-1 rounded-md hover:bg-red-100 font-medium transition"
+             >
+                Clear All
+             </button>
+             <button className="text-sm text-green-600 hover:text-green-700 font-medium">View All</button>
+        </div>
       </div>
       
       <div className="p-4 flex-1 overflow-y-auto space-y-3 max-h-[400px]">

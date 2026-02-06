@@ -28,12 +28,38 @@ const AlertList = () => {
         }
     };
 
+    const handleClearAll = async () => {
+        if(!window.confirm("Are you sure you want to delete ALL alerts? This cannot be undone.")) return;
+        
+        try {
+            const token = JSON.parse(localStorage.getItem('user'))?.token;
+            await axios.delete('http://localhost:5000/api/alerts', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchAlerts(); 
+        } catch(err) {
+            console.error(err);
+            alert("Failed to clear all alerts");
+        }
+    };
+
     return (
         <div className="container mx-auto max-w-4xl p-6">
-            <h1 className="text-3xl font-bold mb-8 text-gray-800 flex items-center gap-3">
-                <ShieldAlert className="text-red-600" size={32} />
-                Security Alerts
-            </h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                    <ShieldAlert className="text-red-600" size={32} />
+                    Security Alerts
+                </h1>
+                {alerts.length > 0 && (
+                    <button 
+                        onClick={handleClearAll}
+                        className="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 border border-red-200"
+                    >
+                        <Trash2 size={18} />
+                        Clear All History
+                    </button>
+                )}
+            </div>
             
             <div className="grid gap-4">
                 {alerts.length === 0 ? (

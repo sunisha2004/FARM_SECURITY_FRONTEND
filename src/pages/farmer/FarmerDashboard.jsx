@@ -129,6 +129,7 @@ const FarmerDashboard = () => {
                         alerts={alerts.slice(0, 10)} // Show max 10
                         loading={loading} 
                         onClear={handleClearAlert}
+                        onClearAll={handleClearAll}
                      />
                  </div>
                  

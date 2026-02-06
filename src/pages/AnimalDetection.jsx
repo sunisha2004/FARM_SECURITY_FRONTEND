@@ -123,6 +123,7 @@ const AnimalDetection = () => {
   const handleSystemToggle = () => {
       if(isActive) {
           stopAnalysis();
+          setSelectedVideo(null); // Clear preview on stop
       } else {
           if(!selectedVideo) return alert("Select a video first");
           startAnalysis(selectedVideo);
