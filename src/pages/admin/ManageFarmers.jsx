@@ -87,6 +87,7 @@ const ManageFarmers = () => {
                 </table>
             </div>
         </div>
+        
     );
 };
 

@@ -211,6 +211,8 @@ const Profile = () => {
                       >
                           Edit Profile
                       </button>
+
+
                   )}
               </div>
           </div>
@@ -219,4 +221,16 @@ const Profile = () => {
   );
 };
 
+
 export default Profile;
+
+
+
+
+
+
+
+
+
+
+

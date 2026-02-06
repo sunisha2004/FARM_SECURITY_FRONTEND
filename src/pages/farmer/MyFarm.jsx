@@ -10,10 +10,33 @@ const MyFarm = () => {
     const [exists, setExists] = useState(false);
     const [msg, setMsg] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [zoneLocation, setZoneLocation] = useState(null);
+    const [hasZone, setHasZone] = useState(false);
 
     useEffect(() => {
         fetchFarm();
+        fetchZoneLocation();
     }, []);
+
+    const fetchZoneLocation = async () => {
+        try {
+            const token = JSON.parse(localStorage.getItem('user'))?.token;
+            if(!token) return;
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const { data } = await axios.get('http://localhost:5000/api/farmer/zones/location', config);
+            
+            if (data.zoneLocationName) {
+                setZoneLocation(data.zoneLocationName);
+                setHasZone(true);
+                // Auto-update farm state to reflect zone location
+                setFarm(prev => ({...prev, location: data.zoneLocationName}));
+            } else {
+                setHasZone(false);
+            }
+        } catch (error) {
+            console.error("Error fetching zone location", error);
+        }
+    };
 
     const fetchFarm = async () => {
         try {
@@ -133,15 +156,22 @@ const MyFarm = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Location</label>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Location {hasZone && <span className="text-green-600 font-normal normal-case ml-1">(Synced with Zone)</span>}</label>
                                             <input 
                                                 type="text" 
-                                                value={farm.location}
-                                                onChange={(e) => setFarm({...farm, location: e.target.value})}
-                                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-                                                placeholder="e.g. 123 Rural Rd, Springfield"
-                                                required
+                                                value={hasZone ? zoneLocation : "Please create a zone first"}
+                                                readOnly
+                                                className={`w-full px-4 py-3 rounded-xl border border-gray-200 outline-none transition-all ${
+                                                    hasZone 
+                                                        ? 'bg-gray-100 text-gray-700 cursor-not-allowed' 
+                                                        : 'bg-red-50 text-red-500 border-red-200 cursor-not-allowed'
+                                                }`}
                                             />
+                                            {!hasZone && (
+                                                <p className="text-xs text-red-500 mt-1">
+                                                    You must define a farm zone in "Zone Management" to set location.
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="pt-2 flex justify-end gap-3">
                                             <button 
