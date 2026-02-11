@@ -1,7 +1,15 @@
 @import "tailwindcss";
 
-html,
+html {
+  scroll-behavior: smooth;
+  background-color: #030712;
+  /* gray-950 */
+  color: #f9fafb;
+  /* gray-50 */
+}
+
 body,
 #root {
   height: 100%;
+  background-color: inherit;
 }

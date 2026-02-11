@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, 
   Trash2, 
@@ -8,11 +9,17 @@ import {
   Maximize2, 
   Plus,
   Loader2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Camera,
+  Calendar,
+  Layers,
+  Search
 } from 'lucide-react';
 import AuthContext from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const FarmGallery = () => {
+  const { isDarkMode } = useTheme();
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -72,8 +79,9 @@ const FarmGallery = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this image?')) return;
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this visual record?')) return;
 
     try {
       const token = JSON.parse(localStorage.getItem('user'))?.token;
@@ -109,16 +117,30 @@ const FarmGallery = () => {
     }
   };
 
+  const themeClasses = {
+    card: isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100',
+    text: isDarkMode ? 'text-white' : 'text-gray-900',
+    muted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+    panel: isDarkMode ? 'bg-gray-900/50 backdrop-blur-xl border-gray-800' : 'bg-white border-gray-100 shadow-sm',
+  };
+
   return (
-    <div className="max-w-7xl mx-auto pb-10">
+    <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="max-w-7xl mx-auto pb-24"
+    >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Farm Gallery</h1>
-          <p className="text-gray-500 mt-1">Manage and showcase your farm's visual records</p>
+          <h1 className={`text-4xl font-black tracking-tighter flex items-center gap-4 ${themeClasses.text}`}>
+            <Camera className="text-emerald-500" size={40} />
+            VISUAL ARCHIVE
+          </h1>
+          <p className={`text-sm font-medium mt-2 max-w-lg ${themeClasses.muted}`}>Secure encrypted repository for farm photography and operational surveillance stills.</p>
         </div>
         
-        <div className="relative group">
+        <div className="flex items-center gap-4">
           <input 
             type="file" 
             multiple 
@@ -128,130 +150,175 @@ const FarmGallery = () => {
             id="multi-upload"
             disabled={uploading}
           />
-          <label 
+          <motion.label 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             htmlFor="multi-upload"
-            className={`flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold shadow-lg shadow-green-600/20 hover:bg-green-700 transition-all cursor-pointer ${uploading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`flex items-center gap-3 px-8 py-4 bg-emerald-600 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 transition-all cursor-pointer ${uploading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
             {uploading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
-            {uploading ? 'Uploading...' : 'Upload Images'}
-          </label>
+            {uploading ? 'INGESTING DATA...' : 'UPLOAD NEW ENTITY'}
+          </motion.label>
         </div>
       </div>
 
       {/* Gallery Grid */}
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <Loader2 className="animate-spin text-green-600 mb-4" size={48} />
-          <p className="text-gray-500 font-medium text-lg">Loading gallery...</p>
+          <div className="w-16 h-16 rounded-[2rem] border-4 border-emerald-500 border-t-transparent animate-spin mb-6"></div>
+          <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${themeClasses.muted}`}>Retrieving Biometric Records...</p>
         </div>
       ) : images.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-gray-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center">
-          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-            <ImageIcon className="text-gray-300" size={40} />
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`rounded-[3rem] p-20 text-center border-2 border-dashed flex flex-col items-center justify-center min-h-[500px] transition-colors duration-500 ${isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'}`}
+        >
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-8 ${isDarkMode ? 'bg-gray-800' : 'bg-white shadow-lg'}`}>
+            <ImageIcon className="text-gray-400" size={40} />
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No farm images uploaded yet</h3>
-          <p className="text-gray-500 max-w-sm mx-auto mb-6">
-            Start building your gallery by uploading images of your farm, equipment, or zones.
+          <h3 className={`text-2xl font-black tracking-tight mb-4 ${themeClasses.text}`}>REPOSITORY DEVOID OF ENTRIES</h3>
+          <p className={`max-w-md mx-auto mb-10 text-sm font-medium leading-relaxed ${themeClasses.muted}`}>
+            The visual ledger currently contains no data points. Populate the archive to maintain comprehensive operational visibility.
           </p>
           <label 
             htmlFor="multi-upload"
-            className="text-green-600 font-semibold hover:text-green-700 cursor-pointer flex items-center gap-2"
+            className="group flex items-center gap-2 px-8 py-3 bg-emerald-500/10 text-emerald-500 rounded-2xl border border-emerald-500/20 font-black text-xs uppercase tracking-[0.2em] hover:bg-emerald-500/20 transition-all cursor-pointer"
           >
-            <Upload size={18} />
-            Click here to upload your first image
+            <Upload size={18} className="transition-transform group-hover:-translate-y-1" />
+            Initialize Primary Ingest
           </label>
-        </div>
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {images.map((img) => (
-            <div 
-              key={img._id} 
-              className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
-            >
-              <div className="aspect-[4/3] overflow-hidden relative">
-                <img 
-                  src={`http://localhost:5000${img.imageUrl}`} 
-                  alt={img.title || 'Farm Image'} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <button 
-                    onClick={() => setSelectedImage(img)}
-                    className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/40 transition-colors"
-                    title="View Fullscreen"
-                  >
-                    <Maximize2 size={20} />
-                  </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <AnimatePresence>
+            {images.map((img, idx) => (
+              <motion.div 
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.05 }}
+                key={img._id} 
+                className={`group relative rounded-[2.5rem] overflow-hidden border transition-all duration-500 shadow-lg ${themeClasses.card} hover:border-emerald-500/50 hover:shadow-emerald-500/10`}
+              >
+                <div className="aspect-[4/3] overflow-hidden relative">
+                  <img 
+                    src={`http://localhost:5000${img.imageUrl}`} 
+                    alt={img.title || 'Farm Image'} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center gap-4">
+                    <motion.button 
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setSelectedImage(img)}
+                      className="p-4 bg-white/20 backdrop-blur-xl rounded-full text-white border border-white/20 hover:bg-emerald-500 transition-all shadow-xl"
+                      title="Tactical View"
+                    >
+                      <Maximize2 size={24} />
+                    </motion.button>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="p-4 flex items-center justify-between">
-                <div className="truncate pr-4">
-                  <p className="text-sm font-medium text-gray-800 truncate">{img.title || 'Untitled Image'}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">{new Date(img.createdAt).toLocaleDateString()}</p>
+                
+                <div className="p-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="truncate flex-1">
+                      <p className={`text-sm font-black truncate tracking-tight transition-colors group-hover:text-emerald-500 ${themeClasses.text}`}>{img.title || 'UNNAMED_ENTITY'}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Calendar size={10} className="text-emerald-500" />
+                        <p className={`text-[9px] font-black uppercase tracking-widest ${themeClasses.muted}`}>{new Date(img.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <label 
+                        className={`p-2 rounded-xl transition-all cursor-pointer ${isDarkMode ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-400/10' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                        title="Update Record"
+                      >
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleReplace(img._id, e.target.files[0])}
+                        />
+                        <Edit size={18} />
+                      </label>
+                      <button 
+                        onClick={(e) => handleDelete(e, img._id)}
+                        className={`p-2 rounded-xl transition-all ${isDarkMode ? 'text-gray-400 hover:text-red-400 hover:bg-red-400/10' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
+                        title="Purge Record"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-1 shrink-0">
-                  <label 
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                    title="Replace Image"
-                  >
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleReplace(img._id, e.target.files[0])}
-                    />
-                    <Edit size={18} />
-                  </label>
-                  <button 
-                    onClick={() => handleDelete(img._id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Delete Image"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
       {/* Lightbox Modal */}
-      {selectedImage && (
-        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center animate-fade-in backdrop-blur-lg">
-          {/* Transparent Backdrop to capture clicks */}
-          <div 
-            className="absolute inset-0 z-0 cursor-pointer" 
-            onClick={() => setSelectedImage(null)}
-          ></div>
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 backdrop-blur-2xl"
+          >
+            {/* Background click to close */}
+            <div className="absolute inset-0 cursor-pointer" onClick={() => setSelectedImage(null)}></div>
 
-          <div className="relative z-10 w-full h-full p-4 md:p-16 flex flex-col items-center justify-center pointer-events-none">
-            <div className="relative pointer-events-auto max-w-full max-h-full group/modal">
-              {/* Close Button - Placed on top-right of the image */}
-              <button 
-                onClick={() => setSelectedImage(null)}
-                className="absolute -top-4 -right-4 md:-top-5 md:-right-5 p-2 bg-white text-gray-900 rounded-full hover:bg-gray-100 transition-all z-[120] border-2 border-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95"
-                title="Close (Esc)"
-              >
-                <X size={24} />
-              </button>
+            <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="relative z-10 w-full max-w-6xl h-full flex flex-col items-center justify-center pointer-events-none"
+            >
+              <div className="relative pointer-events-auto group/modal">
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setSelectedImage(null)}
+                  className="absolute -top-6 -right-6 md:-top-10 md:-right-10 p-3 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all z-[120] shadow-[0_0_30px_rgba(16,185,129,0.5)] border-2 border-white/50"
+                  title="Terminate Protocol (Esc)"
+                >
+                  <X size={28} />
+                </motion.button>
 
-              <img 
-                src={`http://localhost:5000${selectedImage.imageUrl}`} 
-                alt={selectedImage.title} 
-                className="max-w-full max-h-[80vh] md:max-h-[85vh] object-contain rounded-xl shadow-2xl animate-scale-in outline outline-1 outline-white/10"
-              />
-              
-              <div className="mt-6 text-center bg-black/40 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/10">
-                 {/* <h3 className="text-white font-bold text-xl">{selectedImage.title}</h3> */}
-                 <p className="text-gray-400 text-sm mt-1">{new Date(selectedImage.createdAt).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}</p>
+                <div className="bg-black/40 p-2 rounded-[2rem] border border-white/10 shadow-2xl relative overflow-hidden">
+                    <img 
+                    src={`http://localhost:5000${selectedImage.imageUrl}`} 
+                    alt={selectedImage.title} 
+                    className="max-w-full max-h-[75vh] md:max-h-[80vh] object-contain rounded-2xl"
+                    />
+                </div>
+                
+                <motion.div 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="mt-8 text-center bg-black/60 backdrop-blur-2xl px-10 py-6 rounded-3xl border border-white/10 shadow-3xl"
+                >
+                   <h3 className="text-white font-black text-2xl tracking-tighter uppercase">{selectedImage.title || 'Tactical_Record_01'}</h3>
+                   <div className="flex items-center justify-center gap-4 mt-3">
+                        <div className="flex items-center gap-2">
+                             <Clock size={14} className="text-emerald-500" />
+                             <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">{new Date(selectedImage.createdAt).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}</p>
+                        </div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/30"></div>
+                        <div className="flex items-center gap-2">
+                             <Layers size={14} className="text-emerald-500" />
+                             <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">Encrypted Metadata</p>
+                        </div>
+                   </div>
+                </motion.div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

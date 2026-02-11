@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useAlerts } from '../../context/AlertContext';
-import { LayoutDashboard, AlertCircle, ShieldAlert, Map, Activity, Settings, Plus, List } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { LayoutDashboard, AlertCircle, ShieldAlert, Map, Settings, Plus, List, ChevronRight } from 'lucide-react';
 
 import StatsCard from './components/StatsCard';
 import DashboardAlerts from './components/DashboardAlerts';
@@ -12,6 +14,7 @@ import AnimalActivity from './components/AnimalActivity';
 const FarmerDashboard = () => {
     const navigate = useNavigate();
     const { alerts, fetchAlerts, markAsRead } = useAlerts();
+    const { isDarkMode } = useTheme();
     
     // Local state for stats and zones (alerts come from Context for real-time sync if needed)
     const [stats, setStats] = useState({
@@ -65,66 +68,77 @@ const FarmerDashboard = () => {
         }
     };
 
+    const themeClasses = {
+        header: isDarkMode ? 'bg-gray-900 border-gray-800 shadow-emerald-500/5' : 'bg-white border-gray-100 shadow-sm',
+        text: isDarkMode ? 'text-white' : 'text-gray-800',
+        muted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+    };
+
     return (
-        <div className="space-y-6">
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-6 pb-12"
+        >
              {/* Header & Quick Actions */}
-             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
+             <div className={`p-6 rounded-3xl border flex flex-col md:flex-row items-center justify-between gap-6 transition-colors duration-500 ${themeClasses.header}`}>
                  <div>
-                     <h1 className="text-2xl font-bold text-gray-800">Farm Safety Overview</h1>
-                     <p className="text-gray-500 text-sm">Real-time monitoring and security insights</p>
+                     <h1 className={`text-3xl font-bold tracking-tight mb-1 ${themeClasses.text}`}>Farm Safety Overview</h1>
+                     <p className={`text-sm font-medium ${themeClasses.muted}`}>Real-time monitoring and security insights</p>
                  </div>
-                 <div className="flex flex-wrap gap-2">
-                     <button onClick={() => navigate('/farmer/zones')} className="btn-quick-action bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-                        <Plus size={16} /> Add Zone
+                 <div className="flex flex-wrap gap-3">
+                     <button onClick={() => navigate('/farmer/zones')} className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all duration-300 active:scale-95 ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}>
+                        <Plus size={18} /> Add Zone
                      </button>
-                     <button onClick={() => navigate('/farmer/alerts')} className="btn-quick-action bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-                        <List size={16} /> View Alerts
+                     <button onClick={() => navigate('/farmer/alerts')} className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all duration-300 active:scale-95 ${isDarkMode ? 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}>
+                        <List size={18} /> View Alerts
                      </button>
-                     <button onClick={handleClearAll} className="btn-quick-action bg-red-50 text-red-700 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-                        <ShieldAlert size={16} /> Clear All
+                     <button onClick={handleClearAll} className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all duration-300 active:scale-95 ${isDarkMode ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}>
+                        <ShieldAlert size={18} /> Clear All
                      </button>
-                     <button onClick={() => navigate('/profile')} className="btn-quick-action bg-gray-50 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-                        <Settings size={16} /> Settings
+                     <button onClick={() => navigate('/profile')} className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all duration-300 active:scale-95 ${isDarkMode ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}>
+                        <Settings size={18} /> Settings
                      </button>
                  </div>
              </div>
              
              {/* Stats Row */}
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                  <StatsCard 
                     title="Animals Detected Today" 
                     value={stats.totalAnimalsToday} 
                     icon={LayoutDashboard} 
-                    color="bg-blue-500" 
+                    color="emerald" 
                     loading={loading}
                  />
                  <StatsCard 
                     title="Active Alerts" 
                     value={stats.totalActiveAlerts} 
                     icon={AlertCircle} 
-                    color="bg-orange-500" 
+                    color="orange" 
                     loading={loading}
                  />
                  <StatsCard 
                     title="Dangerous Alerts" 
                     value={stats.totalDangerousAlerts} 
                     icon={ShieldAlert} 
-                    color="bg-red-600" 
+                    color="red" 
                     loading={loading}
                  />
                  <StatsCard 
                     title="Zones Created" 
                     value={stats.totalZones} 
                     icon={Map} 
-                    color="bg-green-600" 
+                    color="blue" 
                     loading={loading}
                  />
              </div>
 
              {/* Main Content Grid */}
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[500px]">
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                  {/* Live Alerts - Takes up 2 cols */}
-                 <div className="lg:col-span-2 h-full">
+                 <div className="lg:col-span-2">
                      <DashboardAlerts 
                         alerts={alerts.slice(0, 10)} // Show max 10
                         loading={loading} 
@@ -134,7 +148,7 @@ const FarmerDashboard = () => {
                  </div>
                  
                  {/* Right Column: Animal Activity */}
-                 <div className="lg:col-span-1 h-full">
+                 <div className="lg:col-span-1">
                      <AnimalActivity 
                         mostFrequent={stats.mostFrequentAnimal} 
                         lastDetected={stats.lastDetected} 
@@ -144,10 +158,15 @@ const FarmerDashboard = () => {
              </div>
 
              {/* Zones Overview */}
-             <div className="grid grid-cols-1">
+             <motion.div 
+               initial={{ opacity: 0 }}
+               whileInView={{ opacity: 1 }}
+               viewport={{ once: true }}
+               className="grid grid-cols-1"
+             >
                  <ZoneOverview zones={zones} loading={loading} />
-             </div>
-        </div>
+             </motion.div>
+        </motion.div>
     )
 }
 export default FarmerDashboard;

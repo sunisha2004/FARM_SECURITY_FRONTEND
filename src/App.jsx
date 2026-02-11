@@ -17,26 +17,27 @@ import AlertList from './pages/farmer/AlertList';
 import AlertDetails from './pages/farmer/AlertDetails';
 import FarmGallery from './pages/farmer/FarmGallery';
 import { AlertProvider } from './context/AlertContext';
+import LandingPage from './pages/LandingPage';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 
 import { DetectionProvider } from './context/DetectionContext';
 import GlobalSurveillance from './components/GlobalSurveillance';
 
-function App() {
+function AppContent() {
   const location = useLocation();
-  const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  const { isDarkMode } = useTheme();
+  const isAuthPage = ['/login', '/register', '/'].includes(location.pathname);
 
   return (
-    <DetectionProvider>
-    <AlertProvider>
-      <div className="min-h-screen bg-gray-100 flex flex-col">
-        <Navbar />
+      <div className={`min-h-screen flex flex-col transition-colors duration-500 ${isDarkMode ? 'bg-gray-950 text-white' : 'bg-gray-100 text-gray-900'}`}>
+        {location.pathname !== '/' && <Navbar />}
         {/* Persistent Surveillance Overlay */}
         <GlobalSurveillance />
         
-        <div className="flex flex-1 pt-14"> {/* pt-14 for navbar height */}
+        <div className={`flex flex-1 ${location.pathname !== '/' ? 'pt-14' : ''}`}> {/* pt-14 for navbar height */}
           {!isAuthPage && <Sidebar />}
-          <main className={`flex-1 p-6 transition-all duration-300 ${!isAuthPage ? 'ml-64' : ''}`}>
+          <main className={`flex-1 transition-all duration-300 ${location.pathname !== '/' ? 'p-6' : ''} ${!isAuthPage ? 'ml-64' : ''}`}>
              <Routes>
 
                  <Route path="/login" element={<Login />} />
@@ -66,13 +67,23 @@ function App() {
                     <Route path="/profile" element={<Profile />} />
                  </Route>
 
-                 <Route path="/" element={<Navigate to="/login" replace />} />
+                 <Route path="/" element={<LandingPage />} />
              </Routes>
           </main>
         </div>
       </div>
-    </AlertProvider>
-    </DetectionProvider>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <DetectionProvider>
+        <AlertProvider>
+          <AppContent />
+        </AlertProvider>
+      </DetectionProvider>
+    </ThemeProvider>
   );
 }
 
