@@ -23,6 +23,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 import { DetectionProvider } from './context/DetectionContext';
 import GlobalSurveillance from './components/GlobalSurveillance';
+import AxiosInterceptor from './components/AxiosInterceptor';
 
 function AppContent() {
   const location = useLocation();
@@ -30,6 +31,7 @@ function AppContent() {
   const isAuthPage = ['/login', '/register', '/'].includes(location.pathname);
 
   return (
+    <AxiosInterceptor>
       <div className={`min-h-screen flex flex-col transition-colors duration-500 ${isDarkMode ? 'bg-gray-950 text-white' : 'bg-gray-100 text-gray-900'}`}>
         {location.pathname !== '/' && <Navbar />}
         {/* Persistent Surveillance Overlay */}
@@ -72,6 +74,7 @@ function AppContent() {
           </main>
         </div>
       </div>
+    </AxiosInterceptor>
   );
 }
 

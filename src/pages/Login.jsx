@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Mail, Lock, Loader2, Shield } from 'lucide-react';
+import { Mail, Lock, Loader2, Shield, AlertTriangle } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
